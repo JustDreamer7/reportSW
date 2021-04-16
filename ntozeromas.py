@@ -16,7 +16,7 @@ def ntozerotr(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl):
         try:
             ntrbyzrtr = []
             nto0tr = pd.read_csv(
-                '{}\\n\\{}n_{:02}-{:02}.{:02}'.format(filecl, n,
+                '{}\\{}n_{:02}-{:02}.{:02}'.format(filecl, n,
                                                       single_date.date().month,
                                                       single_date.date().day,
                                                       single_date.date().year - 2000),

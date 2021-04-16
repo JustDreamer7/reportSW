@@ -117,6 +117,10 @@ class Passport(QtWidgets.QMainWindow, Ui_MainWindow):
         with open('pathpass.ini', 'r') as f:
             dirlist = f.read()
         piclist = dirlist + '/Pics'
+        with open('path1files.ini', 'r') as f:
+            file1cl = f.read()
+        with open('path2files.ini', 'r') as f:
+            file2cl = f.read()
         if ~os.path.exists(piclist):
             try:
                 os.mkdir(piclist)
@@ -129,7 +133,7 @@ class Passport(QtWidgets.QMainWindow, Ui_MainWindow):
         # смотри коммент выше
         try:
             n7Proccesing.n7Proccesing(int(lst[0][0]), int(lst[0][1]), int(lst[0][2]), int(lst[1][0]), int(lst[1][1]),
-                                      int(lst[1][2]), dirlist, piclist)
+                                      int(lst[1][2]), dirlist, piclist, file1cl, file2cl)
         except KeyError:
             dataError()
 

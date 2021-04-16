@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import date
 
 
-def a50more(claster, n, stDay, endDay, stYear, endYear, stMonth, endMonth):
+def a50more(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl):
     cols = ['DATE', 'TIME', 'number', 'ntr', 'tr']
     filtr = range(50, 550)
     mainfiltr = []
@@ -24,10 +24,10 @@ def a50more(claster, n, stDay, endDay, stYear, endYear, stMonth, endMonth):
         try:
             a_fr4list = []
             a_fr4 = pd.read_csv(
-                'C:\\Users\\JustDreamer\\Desktop\\PRISMA\\P{}\\n\\{}n_{:02}-{:02}.{:02}'.format(claster, n,
-                                                                                                single_date.date().month,
-                                                                                                single_date.date().day,
-                                                                                                single_date.date().year - 2000),
+                '{}\\{}n_{:02}-{:02}.{:02}'.format(filecl, n,
+                                                   single_date.date().month,
+                                                   single_date.date().day,
+                                                   single_date.date().year - 2000),
                 sep=' ', header=None, skipinitialspace=True)
             a_fr4 = a_fr4.dropna(axis=1, how='all')
             a_fr4.columns = nms
