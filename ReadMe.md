@@ -1,5 +1,5 @@
 # ПО для детектора ПРИЗМА-32/PRISMA-32 software
-##https://justdreamer7.github.io/reportSW/
+
 
 ***1.*** This is project for processing data od PRISMA-32, software create also report on the operation of the detector for any selected period.
 ***2.*** **Author:** Andrew Pochestnev
