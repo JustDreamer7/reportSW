@@ -1,4 +1,3 @@
-
 # pip install PyQt6
 # pyuic6 messenger.ui -o clientui.py
 
@@ -51,8 +50,8 @@ class Passport(QtWidgets.QMainWindow, Ui_MainWindow):
         except:
             ui_drctry.lineEdit_2.setText("")
         ui_drctry.pushButton.clicked.connect(lambda: Ui_takeFiles.getFileDirectory(ui_drctry, 'path1files'))
-                                                            # Ui_takeFiles.getFileDirectory аналог getPassDirectory,
-                                                            # но в файле takesFiles.py
+        # Ui_takeFiles.getFileDirectory аналог getPassDirectory,
+        # но в файле takesFiles.py
         ui_drctry.pushButton_2.clicked.connect(lambda: Ui_takeFiles.getFileDirectory(ui_drctry, 'path2files'))
         self.inst.show()
 
@@ -105,7 +104,7 @@ class Passport(QtWidgets.QMainWindow, Ui_MainWindow):
         # проверяем нормальные даты или нет, если да, то графики и ворд файл строятся
         try:
             secProcessing.secProccesing(int(lst[0][0]), int(lst[0][1]), int(lst[0][2]), int(lst[1][0]), int(lst[1][1]),
-                                    int(lst[1][2]), dirlist, piclist, file1cl, file2cl)
+                                        int(lst[1][2]), dirlist, piclist, file1cl, file2cl)
         except ZeroDivisionError:
             dataError()
 

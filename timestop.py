@@ -14,17 +14,17 @@ def timeBreak(claster, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl
             nms.append("e%s" % (i + 1))
             nms.append("n%s" % (i + 1))
         try:
-            timelist = []
             timestop = pd.read_csv(
                 '{}\\nv\\{}p{:02}-{:02}.{:02}'.format(filecl, claster,
                                                       single_date.date().month,
                                                       single_date.date().day,
                                                       single_date.date().year - 2000),
-                sep=' ', header=None, skipinitialspace=True)
+                sep='\s[-]*\s*', header=None, skipinitialspace=True, engine='python')
             timestop = timestop.dropna(axis=1, how='all')
             timestop.columns = nms
             indx = timestop['time'].tolist()
             if max(indx) != 287:
+                timelist = []
                 stHour = floor(max(indx) * 5 / 60)
                 stMinutes = max(indx) * 5 - stHour * 60
                 endHour = 24
@@ -38,6 +38,7 @@ def timeBreak(claster, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl
                 timelist.append(endMinutes)
                 timedict.append(timelist)
             if min(indx) != 0:
+                timelist = []
                 stHour = 0
                 stMinutes = 5
                 endHour = floor(min(indx) * 5 / 60)
@@ -52,6 +53,7 @@ def timeBreak(claster, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl
                 timedict.append(timelist)
             for i in range(1, len(indx)):
                 if indx[i] - indx[i - 1] > 1:
+                    timelist = []
                     stHour = floor(indx[i - 1] * 5 / 60)
                     stMinutes = indx[i - 1] * 5 - stHour * 60
                     endHour = floor(indx[i] * 5 / 60)
