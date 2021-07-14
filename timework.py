@@ -20,8 +20,7 @@ def timeWork(claster, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl)
                                                       single_date.date().month,
                                                       single_date.date().day,
                                                       single_date.date().year - 2000),
-                sep=' ',
-                header=None, skipinitialspace=True)
+                sep='\s[-]*\s*', header=None, skipinitialspace=True, engine='python')
             timework = timework.dropna(axis=1, how='all')
             timework.columns = nms
             timelist.append(

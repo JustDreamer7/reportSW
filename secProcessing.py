@@ -1,22 +1,24 @@
-import pandas as pd
-from matplotlib import pyplot as plt
+import os
 from datetime import date
+
+import pandas as pd
+from cycler import cycler
 from docx import Document
-from docx.shared import Inches
-from docx.shared import Cm
-from docx.shared import Pt
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.style import WD_STYLE_TYPE
-from docx.shared import RGBColor
+from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.text import WD_BREAK
-from timework import timeWork
-from timestop import timeBreak
-from ntozeromas import ntozerotr
+from docx.shared import Cm
+from docx.shared import Inches
+from docx.shared import Pt
+from docx.shared import RGBColor
+from matplotlib import pyplot as plt
+
 from a4fr import a4fr
 from a52det import a52det
-from cycler import cycler
-import os
+from ntozeromas import ntozerotr
+from timestop import timeBreak
+from timework import timeWork
 
 
 # Длиннокод того, как строяться графики и заполняется ворд
@@ -26,9 +28,9 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
         try:
             os.mkdir(datedirect)
         except OSError:
-            print("Создать директорию %s не удалось" %datedirect)
+            print("Создать директорию %s не удалось" % datedirect)
         else:
-            print("Успешно создана директория %s " %datedirect)
+            print("Успешно создана директория %s " % datedirect)
     your_format = lambda x: '{{:0.{}f}}'.format(2 if x > 1 else 3).format(x)
     pd.set_option('display.float_format', your_format)
     a = date(styear, stmonth, stday)
@@ -68,6 +70,8 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
                     bothtime += bothdt['EM2'].tolist()[i] - bothdt['SM1'].tolist()[i]
                 else:
                     bothtime += bothdt['EM1'].tolist()[i] - bothdt['SM1'].tolist()[i]
+
+    # Обернуть в функцию
 
     breaks = len(timestop.index)
     failstr = ""

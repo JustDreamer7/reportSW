@@ -15,7 +15,7 @@ def a52det(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl):
         cols.append("n%s" % (i + 1))
     df = pd.DataFrame(columns=cols)
     daterange = pd.date_range(date(stYear, stMonth, stDay), date(endYear, endMonth, endDay))
-    # Изменить форму обработки, годовой отчет нельзя сделать нихуя не покажет, если задать не последовательные месяца
+    # Изменить форму обработки, годовой отчет нельзя сделать ничего не покажет, если задать не последовательные месяца
     for single_date in daterange:
         nms = ['time', 'number', 'ntr', 'tr']
         for i in range(16):
