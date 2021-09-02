@@ -8,10 +8,12 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.text import WD_BREAK
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.oxml import OxmlElement, ns
 from docx.shared import Cm
 from docx.shared import Inches
 from docx.shared import Pt
-from docx.shared import RGBColor
+# from docx.shared import RGBColor
 from matplotlib import pyplot as plt
 
 from a4fr import a4fr
@@ -19,6 +21,39 @@ from a52det import a52det
 from ntozeromas import ntozerotr
 from timestop import timeBreak
 from timework import timeWork
+
+
+# функции для проставления номера страницы в ворде -------------------------------
+def create_element(name):
+    return OxmlElement(name)
+
+
+def create_attribute(element, name, value):
+    element.set(ns.qn(name), value)
+
+
+def add_page_number(paragraph):
+    # выравниваем параграф по центру
+    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    # запускаем динамическое обновление параграфа
+    page_num_run = paragraph.add_run()
+    # обозначаем начало позиции вывода
+    fldChar1 = create_element('w:fldChar')
+    create_attribute(fldChar1, 'w:fldCharType', 'begin')
+    # задаем вывод текущего значения страницы PAGE (всего страниц NUMPAGES)
+    instrText = create_element('w:instrText')
+    create_attribute(instrText, 'xml:space', 'preserve')
+    instrText.text = "PAGE"
+    # обозначаем конец позиции вывода
+    fldChar2 = create_element('w:fldChar')
+    create_attribute(fldChar2, 'w:fldCharType', 'end')
+    # добавляем все в наш параграф (который формируется динамически)
+    page_num_run._r.append(fldChar1)
+    page_num_run._r.append(instrText)
+    page_num_run._r.append(fldChar2)
+
+
+# -------------------------------------------------------------------------------------------------------
 
 
 # Длиннокод того, как строяться графики и заполняется ворд
@@ -41,6 +76,8 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     timestop = timeBreak(1, stday, endday, styear, endyear, stmonth, endmonth, file1cl)
     timestop_2 = timeBreak(2, stday, endday, styear, endyear, stmonth, endmonth, file2cl)
 
+    print(timestop)
+    print(timestop_2)
     both = pd.DataFrame()
     for i in range(len(timestop.index)):
         # j: int
@@ -74,28 +111,41 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     # Обернуть в функцию
 
     breaks = len(timestop.index)
-    failstr = ""
+    failstr_begin = []
+    failstr_end = []
+    lost_minutes = []
     for i in range(len(timestop.index)):
-        failstr = failstr + " {} c {}:{:02} до {}:{:02} ".format(timestop['DATE'][i].date(), timestop['stHour'][i],
-                                                                 timestop['stMinutes'][i], timestop['endHour'][i],
-                                                                 timestop['endMinutes'][i])
+        failstr_begin.append(
+            " {}  {:02}:{:02}".format(timestop['DATE'][i].date(), timestop['stHour'][i], timestop['stMinutes'][i]))
+        failstr_end.append(
+            " {}  {:02}:{:02}".format(timestop['DATE'][i].date(), timestop['endHour'][i], timestop['endMinutes'][i]))
+        lost_minutes.append(timestop['endHour'][i] * 60 + timestop['endMinutes'][i] - (
+                timestop['stHour'][i] * 60 + timestop['stMinutes'][i]))
+
     for i in range(1, len(timestop.index)):
         if timestop['stHour'][i] == 0 and timestop['stMinutes'][i] == 5 and timestop['endHour'][i - 1] == 24 and \
                 (timestop['DATE'][1] - timestop['DATE'][0]).days == 1:
             breaks -= 1
 
     breaks_2 = len(timestop_2.index)
-    failstr_2 = ""
+    failstr_2_begin = []
+    failstr_2_end = []
+    lost_minutes_2 = []
     for i in range(len(timestop_2.index)):
-        failstr_2 = failstr_2 + " {} c {}:{:02} до {}:{:02} ".format(timestop_2['DATE'][i].date(),
-                                                                     timestop_2['stHour'][i],
-                                                                     timestop_2['stMinutes'][i],
-                                                                     timestop_2['endHour'][i],
-                                                                     timestop_2['endMinutes'][i])
+        failstr_2_begin.append(
+            " {}  {:02}:{:02}".format(timestop_2['DATE'][i].date(), timestop_2['stHour'][i],
+                                      timestop_2['stMinutes'][i]))
+        failstr_2_end.append(
+            " {}  {:02}:{:02}".format(timestop_2['DATE'][i].date(), timestop_2['endHour'][i],
+                                      timestop_2['endMinutes'][i]))
+        lost_minutes_2.append(timestop_2['endHour'][i] * 60 + timestop_2['endMinutes'][i] - (
+                timestop_2['stHour'][i] * 60 + timestop_2['stMinutes'][i]))
+
     for i in range(1, len(timestop_2.index)):
         if timestop_2['stHour'][i] == 0 and timestop_2['stMinutes'][i] == 5 and timestop_2['endHour'][i - 1] == 24 and \
                 (timestop_2['DATE'][1] - timestop_2['DATE'][0]).days == 1:
             breaks_2 -= 1
+
     realtime = worktime_2['WORKTIME'].sum() - 24 * (len(worktime)) + worktime['WORKTIME'].sum() + bothtime / 60
 
     font = {'weight': 'bold',
@@ -177,14 +227,14 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     infonto0tr_2 = nto0tr_2.describe().tail(7).head(2)
     infonto0tr.index = ['mean(100/cоб.)', 'std(100/cоб.)']
     infonto0tr_2.index = ['mean(100/cоб.)', 'std(100/cоб.)']
-    for item in nto0tr.columns[1::]:
-        for number in nto0tr.index:
-            if nto0tr[item][number] > 0.5:
-                nto0tr[item][number] = 0.5
-    for item in nto0tr_2.columns[1::]:
-        for number in nto0tr.index:
-            if nto0tr_2[item][number] > 0.5:
-                nto0tr_2[item][number] = 0.5
+    # for item in nto0tr.columns[1::]:
+    #     for number in nto0tr.index:
+    #         if nto0tr[item][number] > 0.5:
+    #             nto0tr[item][number] = 0.5
+    # for item in nto0tr_2.columns[1::]:
+    #     for number in nto0tr.index:
+    #         if nto0tr_2[item][number] > 0.5:
+    #             nto0tr_2[item][number] = 0.5
 
     plt.rc('axes', prop_cycle=(cycler('color', ['r', 'g', 'b', 'darkblue', 'lawngreen', 'b', 'c', 'y', 'm', 'orange',
                                                 'burlywood', 'darkmagenta', 'grey', 'darkslategray', 'saddlebrown',
@@ -222,7 +272,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     plt.grid(which='minor',
              color='k',
              linestyle=':')
-    plt.ylim([0, 0.5], emit=False)
+    # plt.ylim([0, 0.5], emit=False)
     plt.xlim([a, b])
     box_1 = {'facecolor': 'white',  # цвет области
              'edgecolor': 'red',  # цвет крайней линии
@@ -390,9 +440,10 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     font.italic = True
 
     head = doc.add_paragraph(
-        'Справка о работе установки ПРИЗМА-32 в период с {}.{:02}.{} по {}.{:02}.{} '.format(stday, stmonth, styear,
-                                                                                             endday, endmonth,
-                                                                                             endyear),
+        'Справка о работе установки ПРИЗМА-32 в период с {:02}.{:02}.{} по {:02}.{:02}.{} '.format(stday, stmonth,
+                                                                                                   styear,
+                                                                                                   endday, endmonth,
+                                                                                                   endyear),
         style='Headstyle')
     head.alignment = WD_ALIGN_PARAGRAPH.CENTER
     desc = doc.add_paragraph('Таблица 1: Время работы установки ПРИЗМА-32.', style='PItalic')
@@ -432,48 +483,72 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
             run.font.bold = True
     space = doc.add_paragraph()
 
-    desc = doc.add_paragraph('Таблица 2: Сводная таблица неисправностей установки ПРИЗМА-32.', style='PItalic')
-    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-    err = doc.add_table(3, 4, doc.styles['Table Grid'])
+    err = doc.add_table(len(failstr_begin)+len(failstr_2_begin) + 2, 5, doc.styles['Table Grid'])
+    # err.alignment = WD_TABLE_ALIGNMENT.CENTER
     err.cell(0, 0).text = '№ кластера'
-    err.cell(0, 1).text = 'Время, простоя'
-    err.cell(0, 2).text = 'Кол-во остановок'
-    err.cell(0, 3).text = 'Причины остановок, описание поломок'
-    err.cell(1, 0).text = '1'
-    err.cell(1, 1).text = failstr
-    err.cell(1, 2).text = str(breaks)
-    # err.cell(2,3).text=str(round(time_2['Unnamed: 1'].sum()/(24*(len(time_2)+1)),3))
-    err.cell(2, 0).text = '2'
-    err.cell(2, 1).text = failstr_2
-    err.cell(2, 2).text = str(breaks_2)
+    err.cell(0, 0).merge(err.cell(1, 0))
+    err.cell(0, 1).text = 'Время простоя'
+    err.cell(1, 1).text = 'c'
+    err.cell(1, 2).text = 'по'
+    err.cell(0, 1).merge(err.cell(0, 2))
+    err.cell(0, 3).text = 'Кол-во потерянных минут (период)'
+    err.cell(0, 3).merge(err.cell(1, 3))
+    err.cell(0, 4).text = 'Примечание'
+    err.cell(0, 4).merge(err.cell(1, 4))
 
-    for row in range(1):
-        for col in range(4):
+    for i in range(2, len(failstr_begin) + 2):
+        err.cell(i, 0).text = '1'
+        err.cell(i, 1).text = str(failstr_begin[i - 2])
+        err.cell(i, 2).text = str(failstr_end[i - 2])
+        err.cell(i, 3).text = str(lost_minutes[i - 2])
+        err.cell(i, 4).text = ' '
+
+    for i in range(2+len(failstr_begin), len(failstr_2_begin) + 2+len(failstr_begin)):
+        err.cell(i, 0).text = '2'
+        err.cell(i, 1).text = str(failstr_2_begin[i - 2-len(failstr_begin)])
+        err.cell(i, 2).text = str(failstr_2_end[i - 2-len(failstr_begin)])
+        err.cell(i, 3).text = str(lost_minutes_2[i - 2-len(failstr_begin)])
+        err.cell(i, 4).text = ' '
+
+    for row in range(2):
+        for col in range(5):
             # получаем ячейку таблицы
             cell = err.cell(row, col)
             # записываем в ячейку данные
             run = cell.paragraphs[0].runs[0]
             run.font.bold = True
-            run.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    for row in range(1, 3):
+    for row in range(1, len(failstr_begin) + 2 + len(failstr_2_begin)):
         for col in range(1):
             # получаем ячейку таблицы
             cell = err.cell(row, col)
             # записываем в ячейку данные
             run = cell.paragraphs[0].runs[0]
             run.font.bold = True
-            run.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    for cell in err.columns[0].cells:
-        cell.width = Inches(0.9)
-    for cell in err.columns[1].cells:
-        cell.width = Inches(1.85)
-    for cell in err.columns[2].cells:
-        cell.width = Inches(0.9)
-    for cell in err.columns[3].cells:
-        cell.width = Inches(3.7)
+    for row in range(len(failstr_begin) + 2 + len(failstr_2_begin)):
+        for col in range(5):
+            cell = err.cell(row, col)
+            # записываем в ячейку данные
+            para_ph = cell.paragraphs[0]
+            para_ph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    # desc = doc.add_paragraph('Таблица 2: Сводная таблица остановок и работ установки ПРИЗМА-32.', style='PItalic')
+    # desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    #
+    # err = doc.add_table(3, 4, doc.styles['Table Grid'])
+    # err.cell(0, 0).text = '№ кластера'
+    # err.cell(0, 1).text = 'Время, простоя'
+    # err.cell(0, 2).text = 'Кол-во остановок'
+    # err.cell(0, 3).text = 'Причины остановок, описание поломок'
+    # err.cell(1, 0).text = '1'
+    # # err.cell(1, 1).text = failstr
+    # err.cell(1, 2).text = str(breaks)
+    # # err.cell(2,3).text=str(round(time_2['Unnamed: 1'].sum()/(24*(len(time_2)+1)),3))
+    # err.cell(2, 0).text = '2'
+    # # err.cell(2, 1).text = failstr_2
+    # err.cell(2, 2).text = str(breaks_2)
+
 
     space = doc.add_paragraph()
 
@@ -517,10 +592,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     neut.alignment = WD_TABLE_ALIGNMENT.CENTER
     space = doc.add_paragraph()
 
-    # desc=doc.add_paragraph('')
-    # desc.add_run('Условные обозначения:').bold=True
-    # desc=doc.add_paragraph('1)Кратность - Fr')
-
     prim1 = doc.add_paragraph('')
     prim1.add_run('Примечание:').bold = True
     prim2 = doc.add_paragraph(
@@ -532,17 +603,18 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     clprim.cell(0, 0).text = '№'
     clprim.cell(0, 1).text = 'Кластер'
     clprim.cell(0, 2).text = '№ Детектора'
-    clprim.cell(0, 3).text = 'Дата'
+    clprim.cell(0, 3).text = 'Период'
     clprim.cell(0, 4).text = 'Примечание'
     clprim.cell(1, 0).text = '1'
     clprim.cell(2, 0).text = '2'
-    space = doc.add_paragraph()
-    baddet = doc.add_paragraph('')
-    baddet.add_run('Наиболее плохо работающие детекторы (').bold = True
-    run = baddet.add_run('по приоритету')
-    font = run.font
-    font.color.rgb = RGBColor(217, 26, 26)
-    baddet.add_run(')').bold = True
+
+    # space = doc.add_paragraph()
+    # baddet = doc.add_paragraph('')
+    # baddet.add_run('Наиболее плохо работающие детекторы (').bold = True
+    # run = baddet.add_run('по приоритету')
+    # font = run.font
+    # font.color.rgb = RGBColor(217, 26, 26)
+    # baddet.add_run(')').bold = True
 
     for cell in clprim.columns[0].cells:
         cell.width = Inches(0.3)
@@ -555,11 +627,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     for cell in clprim.columns[4].cells:
         cell.width = Inches(4.2)
     neut.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-    space = doc.add_paragraph()
-
-    desc = doc.add_paragraph('1')
-    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     run = doc.add_paragraph().add_run()
     run.add_break(WD_BREAK.PAGE)
@@ -577,12 +644,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     desc = doc.add_paragraph('Рис. 2 - Продолжительность работы 2-го кластера в сутки', style='PItalic')
     desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-
-    desc = doc.add_paragraph('2')
-    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
     run = doc.add_paragraph().add_run()
     run.add_break(WD_BREAK.PAGE)
 
@@ -592,23 +653,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     last_paragraph = doc.paragraphs[-1]
     last_paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     desc = doc.add_paragraph('Рис. 3 - Скорость счета событий Fr ≥ 4, A ≥ 5', style='PItalic')
-    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-
-    desc = doc.add_paragraph('3')
     desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     run = doc.add_paragraph().add_run()
@@ -685,11 +729,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
             run.font.bold = True
             run.font.size = Pt(8.5)
 
-    space = doc.add_paragraph()
-
-    desc = doc.add_paragraph('4')
-    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
     run = doc.add_paragraph().add_run()
     run.add_break(WD_BREAK.PAGE)
 
@@ -760,11 +799,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
             run.font.bold = True
             run.font.size = Pt(8.5)
 
-    space = doc.add_paragraph()
-
-    desc = doc.add_paragraph('5')
-    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
     run = doc.add_paragraph().add_run()
     run.add_break(WD_BREAK.PAGE)
 
@@ -788,10 +822,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
                              style='PItalic')
     desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    space = doc.add_paragraph()
-    space = doc.add_paragraph()
-
-    desc = doc.add_paragraph('6')
-    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    add_page_number(doc.sections[0].footer.paragraphs[0])
 
     doc.save(f'{path}\{stday:02}.{stmonth:02}.{styear}-{endday:02}-{endmonth:02}.{endyear}.docx')
