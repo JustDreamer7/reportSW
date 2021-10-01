@@ -272,7 +272,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     plt.grid(which='minor',
              color='k',
              linestyle=':')
-    # plt.ylim([0, 0.5], emit=False)
+    plt.ylim([0, 0.5], emit=False)
     plt.xlim([a, b])
     box_1 = {'facecolor': 'white',  # цвет области
              'edgecolor': 'red',  # цвет крайней линии
@@ -390,10 +390,10 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     df = pd.DataFrame()
     df_2 = pd.DataFrame()
     for i in range(1, 17):
-        test = data_2[data_2['e%s' % i] > 5]['DATE'].value_counts().sort_index().to_frame()
+        test = data[data['e%s' % i] > 5]['DATE'].value_counts().sort_index().to_frame()
         test['VALUE'] = test['DATE']
         test['DATE'] = test.index
-        test = test.merge(worktime_2, how='left')
+        test = test.merge(worktime, how='left')
         df["%s" % i] = test['VALUE'] / worktime[
             'WORKTIME']
     df = df.describe().tail(7).head(2)
