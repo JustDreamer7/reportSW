@@ -104,7 +104,7 @@ class Passport(QtWidgets.QMainWindow, Ui_MainWindow):
         # проверяем нормальные даты или нет, если да, то графики и ворд файл строятся
         try:
             secProcessing.secProccesing(int(lst[0][0]), int(lst[0][1]), int(lst[0][2]), int(lst[1][0]), int(lst[1][1]),
-                                        int(lst[1][2]), dirlist, piclist, file1cl, file2cl)
+                                        int(lst[1][2]), dirlist, piclist, file1cl, file2cl, amp= 11, fr= 1)
         except ZeroDivisionError:
             dataError()
 

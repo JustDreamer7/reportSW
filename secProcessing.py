@@ -57,7 +57,7 @@ def add_page_number(paragraph):
 
 
 # Длиннокод того, как строяться графики и заполняется ворд
-def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathpic, file1cl, file2cl):
+def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathpic, file1cl, file2cl, amp, fr):
     datedirect = pathpic + '/{}'.format(styear)
     if ~os.path.exists(datedirect):
         try:
@@ -72,12 +72,14 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     b = date(endyear, endmonth, endday)
     worktime = timeWork(1, stday, endday, styear, endyear, stmonth, endmonth, file1cl)
     worktime_2 = timeWork(2, stday, endday, styear, endyear, stmonth, endmonth, file2cl)
+    # print(worktime)
+    # print(worktime_2)
 
     timestop = timeBreak(1, stday, endday, styear, endyear, stmonth, endmonth, file1cl)
     timestop_2 = timeBreak(2, stday, endday, styear, endyear, stmonth, endmonth, file2cl)
 
-    print(timestop)
     print(timestop_2)
+    print(timestop)
     both = pd.DataFrame()
     for i in range(len(timestop.index)):
         # j: int
@@ -88,25 +90,23 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
                 SM2 = timestop_2.iloc[j][1] * 60 + timestop_2.iloc[j][2]
                 EM2 = timestop_2.iloc[j][3] * 60 + timestop_2.iloc[j][4]
                 ser = pd.Series([SM1, EM1, SM2, EM2])
-                both[i] = ser
+                both[i] = ser.copy()
+                # строка выше - тест
     if len(both.index) > 0:
         both.index = ["SM1", "EM1", "SM2", "EM2"]
     bothdt = both.T
     bothtime = 0
+    print(bothdt)
     if len(bothdt) > 0:
-        for i in range(len(bothdt)):
-            if bothdt['SM2'].tolist()[i] >= bothdt['SM1'].tolist()[i]:
-                if bothdt['EM2'].tolist()[i] - bothdt['SM2'].tolist()[i] >= bothdt['EM1'].tolist()[i] - \
-                        bothdt['SM2'].tolist()[i]:
-                    bothtime += bothdt['EM1'].tolist()[i] - bothdt['SM2'].tolist()[i]
-                else:
-                    bothtime += bothdt['EM2'].tolist()[i] - bothdt['SM2'].tolist()[i]
-            else:
-                if bothdt['EM1'].tolist()[i] - bothdt['SM1'].tolist()[i] >= bothdt['EM2'].tolist()[i] - \
-                        bothdt['SM1'].tolist()[i]:
-                    bothtime += bothdt['EM2'].tolist()[i] - bothdt['SM1'].tolist()[i]
-                else:
-                    bothtime += bothdt['EM1'].tolist()[i] - bothdt['SM1'].tolist()[i]
+        start_minutes_1 = bothdt['SM1'].tolist()
+        start_minutes_2 = bothdt['SM2'].tolist()
+        end_minutes_1 = bothdt['EM1'].tolist()
+        end_minutes_2 = bothdt['EM2'].tolist()
+        for i in range(len(bothdt.index)):
+            if start_minutes_1[i] <= start_minutes_2[i] < end_minutes_1[i]:
+                bothtime += min(end_minutes_2[i], end_minutes_1[i]) - max(start_minutes_2[i], start_minutes_1[i])
+            elif start_minutes_2[i] <= start_minutes_1[i] < end_minutes_2[i]:
+                bothtime += min(end_minutes_2[i], end_minutes_1[i]) - max(start_minutes_2[i], start_minutes_1[i])
 
     # Обернуть в функцию
 
@@ -146,7 +146,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
                 (timestop_2['DATE'][1] - timestop_2['DATE'][0]).days == 1:
             breaks_2 -= 1
 
-    realtime = worktime_2['WORKTIME'].sum() - 24 * (len(worktime)) + worktime['WORKTIME'].sum() + bothtime / 60
+    realtime = worktime_2['WORKTIME'].sum() - 24 * (len(worktime.index)) + worktime['WORKTIME'].sum() + bothtime / 60
 
     font = {'weight': 'bold',
             'size': 14}
@@ -227,14 +227,6 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     infonto0tr_2 = nto0tr_2.describe().tail(7).head(2)
     infonto0tr.index = ['mean(100/cоб.)', 'std(100/cоб.)']
     infonto0tr_2.index = ['mean(100/cоб.)', 'std(100/cоб.)']
-    # for item in nto0tr.columns[1::]:
-    #     for number in nto0tr.index:
-    #         if nto0tr[item][number] > 0.5:
-    #             nto0tr[item][number] = 0.5
-    # for item in nto0tr_2.columns[1::]:
-    #     for number in nto0tr.index:
-    #         if nto0tr_2[item][number] > 0.5:
-    #             nto0tr_2[item][number] = 0.5
 
     plt.rc('axes', prop_cycle=(cycler('color', ['r', 'g', 'b', 'darkblue', 'lawngreen', 'b', 'c', 'y', 'm', 'orange',
                                                 'burlywood', 'darkmagenta', 'grey', 'darkslategray', 'saddlebrown',
@@ -256,7 +248,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
              'boxstyle': 'round'}
     plt.title("1-кластер", bbox=box_1, fontsize=20, loc='center')
     for i in range(1, 17):
-        plt.plot(nto0tr['DATE'], nto0tr['n%s' % i], label='%s' % i, linewidth=6)
+        plt.plot(nto0tr['DATE'], nto0tr['n%s' % i], label='%s' % i, linewidth=5)
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
     plt.savefig('{}\\{}\\ntozeromas{}-{}-{}-{}.png'.format(pathpic, styear, stday, stmonth, endday, endmonth),
                 bbox_inches='tight')
@@ -279,14 +271,14 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
              'boxstyle': 'round'}
     plt.title("2-кластер", bbox=box_1, fontsize=20, loc='center')
     for i in range(1, 17):
-        plt.plot(nto0tr_2['DATE'], nto0tr_2['n%s' % i], label='%s' % i, linewidth=6)
+        plt.plot(nto0tr_2['DATE'], nto0tr_2['n%s' % i], label='%s' % i, linewidth=5)
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
     plt.savefig('{}\\{}\\2ntozeromas{}-{}-{}-{}.png'.format(pathpic, styear, styear, stday, stmonth, endday, endmonth),
                 bbox_inches='tight')
     nzm2path = "{}\\{}\\2ntozeromas{}-{}-{}-{}.png".format(pathpic, styear, styear, stday, stmonth, endday, endmonth)
 
-    data = a52det('', stday, endday, styear, endyear, stmonth, endmonth, file1cl)
-    data_2 = a52det(2, stday, endday, styear, endyear, stmonth, endmonth, file2cl)
+    data = a52det('', stday, endday, styear, endyear, stmonth, endmonth, file1cl, amp=amp, fr=fr)
+    data_2 = a52det(2, stday, endday, styear, endyear, stmonth, endmonth, file2cl, amp=amp, fr=fr)
     plt.figure(figsize=(18, 10))
     plt.xlabel('Амплитуда, код АЦП', fontsize=20)
     plt.yscale('log')
@@ -295,15 +287,15 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     plt.minorticks_on()
     plt.tick_params(axis='both', which='minor', direction='out', length=10, width=2, pad=10)
     plt.tick_params(axis='both', which='major', direction='out', length=20, width=4, pad=10)
-    plt.xlim([6, 1000])
+    plt.xlim([amp - 1, 1000])
     plt.ylim([1, 1000])
     box_1 = {'facecolor': 'white',  # цвет области
              'edgecolor': 'red',  # цвет крайней линии
              'boxstyle': 'round'}
     plt.text(500, 500, "1-кластер", bbox=box_1, fontsize=20)
     for i in range(1, 17):
-        plt.plot(data[data['e%s' % i] > 5]['e%s' % i].value_counts().sort_index().keys().tolist(),
-                 data[data['e%s' % i] > 5]['e%s' % i].value_counts().sort_index(), label='%s' % i, linewidth=5)
+        plt.plot(data[data['e%s' % i] >= amp]['e%s' % i].value_counts().sort_index().keys().tolist(),
+                 data[data['e%s' % i] >= amp]['e%s' % i].value_counts().sort_index(), label='%s' % i, linewidth=5)
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
     plt.savefig('{}\\{}\\Neva5fr2{}-{}-{}-{}.png'.format(pathpic, styear, styear, stday, stmonth, endday, endmonth),
                 bbox_inches='tight')
@@ -316,15 +308,15 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     plt.ylabel('Nсоб(Fr≥2, A>5)', fontsize=20)
     plt.tick_params(axis='both', which='minor', direction='out', length=10, width=2, pad=10)
     plt.tick_params(axis='both', which='major', direction='out', length=20, width=4, pad=10)
-    plt.xlim([6, 1000])
+    plt.xlim([amp - 1, 1000])
     plt.ylim([1, 1000])
     box_1 = {'facecolor': 'white',  # цвет области
              'edgecolor': 'red',  # цвет крайней линии
              'boxstyle': 'round'}
     plt.text(500, 500, "2-кластер", bbox=box_1, fontsize=20)
     for i in range(1, 17):
-        plt.plot(data_2[data_2['e%s' % i] > 5]['e%s' % i].value_counts().sort_index().keys().tolist(),
-                 data_2[data_2['e%s' % i] > 5]['e%s' % i].value_counts().sort_index(), label='%s' % i, linewidth=5)
+        plt.plot(data_2[data_2['e%s' % i] >= amp]['e%s' % i].value_counts().sort_index().keys().tolist(),
+                 data_2[data_2['e%s' % i] >= amp]['e%s' % i].value_counts().sort_index(), label='%s' % i, linewidth=5)
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
     plt.savefig('{}\\{}\\N2eva5fr2{}-{}-{}-{}.png'.format(pathpic, styear, stday, stmonth, endday, endmonth),
                 bbox_inches='tight')
@@ -350,7 +342,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
              'boxstyle': 'round'}
     plt.title("1-кластер", bbox=box_1, fontsize=20, loc='center')
     for i in range(1, 17):
-        test = data[data['e%s' % i] > 5]['DATE'].value_counts().sort_index().to_frame()
+        test = data[data['e%s' % i] > amp]['DATE'].value_counts().sort_index().to_frame()
         test['VALUE'] = test['DATE']
         test['DATE'] = test.index
         test = test.merge(worktime, how='left')
@@ -377,7 +369,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
              'boxstyle': 'round'}
     plt.title("2-кластер", bbox=box_1, fontsize=20, loc='center')
     for i in range(1, 17):
-        test_2 = data_2[data_2['e%s' % i] > 5]['DATE'].value_counts().sort_index().to_frame()
+        test_2 = data_2[data_2['e%s' % i] > amp]['DATE'].value_counts().sort_index().to_frame()
         test_2['VALUE'] = test_2['DATE']
         test_2['DATE'] = test_2.index
         test_2 = test_2.merge(worktime_2, how='left')
@@ -390,7 +382,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     df = pd.DataFrame()
     df_2 = pd.DataFrame()
     for i in range(1, 17):
-        test = data[data['e%s' % i] > 5]['DATE'].value_counts().sort_index().to_frame()
+        test = data[data['e%s' % i] > amp]['DATE'].value_counts().sort_index().to_frame()
         test['VALUE'] = test['DATE']
         test['DATE'] = test.index
         test = test.merge(worktime, how='left')
@@ -398,7 +390,7 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
             'WORKTIME']
     df = df.describe().tail(7).head(2)
     for j in range(1, 17):
-        test_2 = data_2[data_2['e%s' % j] > 5]['DATE'].value_counts().sort_index().to_frame()
+        test_2 = data_2[data_2['e%s' % j] > amp]['DATE'].value_counts().sort_index().to_frame()
         test_2['VALUE'] = test_2['DATE']
         test_2['DATE'] = test_2.index
         test_2 = test_2.merge(worktime_2, how='left')
@@ -483,8 +475,8 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
             run.font.bold = True
     space = doc.add_paragraph()
 
-    err = doc.add_table(len(failstr_begin)+len(failstr_2_begin) + 2, 5, doc.styles['Table Grid'])
-    # err.alignment = WD_TABLE_ALIGNMENT.CENTER
+    err = doc.add_table(len(failstr_begin) + len(failstr_2_begin) + 2, 5, doc.styles['Table Grid'])
+    err.alignment = WD_TABLE_ALIGNMENT.CENTER
     err.cell(0, 0).text = '№ кластера'
     err.cell(0, 0).merge(err.cell(1, 0))
     err.cell(0, 1).text = 'Время простоя'
@@ -503,11 +495,11 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
         err.cell(i, 3).text = str(lost_minutes[i - 2])
         err.cell(i, 4).text = ' '
 
-    for i in range(2+len(failstr_begin), len(failstr_2_begin) + 2+len(failstr_begin)):
+    for i in range(2 + len(failstr_begin), len(failstr_2_begin) + 2 + len(failstr_begin)):
         err.cell(i, 0).text = '2'
-        err.cell(i, 1).text = str(failstr_2_begin[i - 2-len(failstr_begin)])
-        err.cell(i, 2).text = str(failstr_2_end[i - 2-len(failstr_begin)])
-        err.cell(i, 3).text = str(lost_minutes_2[i - 2-len(failstr_begin)])
+        err.cell(i, 1).text = str(failstr_2_begin[i - 2 - len(failstr_begin)])
+        err.cell(i, 2).text = str(failstr_2_end[i - 2 - len(failstr_begin)])
+        err.cell(i, 3).text = str(lost_minutes_2[i - 2 - len(failstr_begin)])
         err.cell(i, 4).text = ' '
 
     for row in range(2):
@@ -533,22 +525,21 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
             para_ph = cell.paragraphs[0]
             para_ph.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    # desc = doc.add_paragraph('Таблица 2: Сводная таблица остановок и работ установки ПРИЗМА-32.', style='PItalic')
-    # desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    #
-    # err = doc.add_table(3, 4, doc.styles['Table Grid'])
-    # err.cell(0, 0).text = '№ кластера'
-    # err.cell(0, 1).text = 'Время, простоя'
-    # err.cell(0, 2).text = 'Кол-во остановок'
-    # err.cell(0, 3).text = 'Причины остановок, описание поломок'
-    # err.cell(1, 0).text = '1'
-    # # err.cell(1, 1).text = failstr
-    # err.cell(1, 2).text = str(breaks)
-    # # err.cell(2,3).text=str(round(time_2['Unnamed: 1'].sum()/(24*(len(time_2)+1)),3))
-    # err.cell(2, 0).text = '2'
-    # # err.cell(2, 1).text = failstr_2
-    # err.cell(2, 2).text = str(breaks_2)
+    desc = doc.add_paragraph('Таблица 2: Сводная таблица остановок и работ установки ПРИЗМА-32.', style='PItalic')
+    desc.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
+    err = doc.add_table(3, 4, doc.styles['Table Grid'])
+    err.cell(0, 0).text = '№ кластера'
+    err.cell(0, 1).text = 'Время, простоя'
+    err.cell(0, 2).text = 'Кол-во остановок'
+    err.cell(0, 3).text = 'Причины остановок, описание поломок'
+    err.cell(1, 0).text = '1'
+    # err.cell(1, 1).text = failstr
+    err.cell(1, 2).text = str(breaks)
+    # err.cell(2,3).text=str(round(time_2['Unnamed: 1'].sum()/(24*(len(time_2)+1)),3))
+    err.cell(2, 0).text = '2'
+    # err.cell(2, 1).text = failstr_2
+    err.cell(2, 2).text = str(breaks_2)
 
     space = doc.add_paragraph()
 
@@ -825,3 +816,29 @@ def secProccesing(stday, stmonth, styear, endday, endmonth, endyear, path, pathp
     add_page_number(doc.sections[0].footer.paragraphs[0])
 
     doc.save(f'{path}\{stday:02}.{stmonth:02}.{styear}-{endday:02}-{endmonth:02}.{endyear}.docx')
+
+    plt.close('all')
+
+    # ДЛЯ ГОДОВОГО ОТЧЕТА
+    # plt.figure(figsize=(18, 10))
+    # plt.xlabel('Дата', fontsize=20)
+    # plt.ylabel(r'$(coб)^{-1}$', fontsize=20)
+    # plt.grid()
+    # plt.minorticks_on()
+    # plt.tick_params(axis='both', which='minor', direction='out', length=10, width=2, pad=10)
+    # plt.tick_params(axis='both', which='major', direction='out', length=20, width=4, pad=10)
+    # plt.grid(which='minor',
+    #          color='k',
+    #          linestyle=':')
+    # plt.ylim([0, 0.5], emit=False)
+    # plt.xlim([a, b])
+    # box_1 = {'facecolor': 'white',  # цвет области
+    #          'edgecolor': 'red',  # цвет крайней линии
+    #          'boxstyle': 'round'}
+    # plt.title("1-кластер", bbox=box_1, fontsize=20, loc='center')
+    # for i in range(1, 17):
+    #     plt.plot(nto0tr['DATE'], nto0tr['n%s' % i], label='%s' % i, linewidth=5)
+    # plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    # plt.savefig('{}\\{}\\ntozeromas{}-{}-{}-{}.png'.format(pathpic, styear, stday, stmonth, endday, endmonth),
+    #             bbox_inches='tight')
+    # nzm1path = "{}\\{}\\ntozeromas{}-{}-{}-{}.png".format(pathpic, styear, stday, stmonth, endday, endmonth)

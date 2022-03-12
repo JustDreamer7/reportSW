@@ -2,9 +2,9 @@ import pandas as pd
 from datetime import date
 
 
-def a52det(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl):
+def a52det(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl, amp, fr):
     cols = ['DATE', 'time', 'number', 'ntr', 'tr']
-    filtr = range(6, 550)
+    filtr = range(amp, 550)
     mainfiltr = []
     ecols = []
 
@@ -32,7 +32,7 @@ def a52det(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl):
             a_fr4 = a_fr4.dropna(axis=1, how='all')
             a_fr4.columns = nms
             a_fr4['fr_sum'] = a_fr4.isin(dict(zip(ecols, mainfiltr))).sum(axis=1, skipna=True)
-            a_fr4 = a_fr4[a_fr4['fr_sum'] >= 2]
+            a_fr4 = a_fr4[a_fr4['fr_sum'] >= fr]
             a_fr4['DATE'] = ['{:02}/{:02}/{}'.format(single_date.date().month,
                                                      single_date.date().day,
                                                      single_date.date().year)] * len(a_fr4.index)
