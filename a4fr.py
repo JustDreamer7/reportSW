@@ -35,6 +35,12 @@ def a4fr(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl):
             a_fr4list.append(len(eframe[eframe['fr_sum'] >= 4].index))
             timedict.append(a_fr4list)
         except:
+            a_fr4list = []
+            a_fr4list.append('{:02}/{:02}/{}'.format(single_date.date().month,
+                                                     single_date.date().day,
+                                                     single_date.date().year))
+            a_fr4list.append(0.00)
+            timedict.append(a_fr4list)
             print("такого файла нит {}n{:02}-{:02}.{:02}".format(n, single_date.date().month,
                                                                  single_date.date().day,
                                                                  single_date.date().year - 2000))

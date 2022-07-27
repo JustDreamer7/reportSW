@@ -39,7 +39,7 @@ def a52det(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl, amp, fr
             a_fr4 = a_fr4[cols]
             df = pd.concat([df, a_fr4], ignore_index=True)
         except:
-            print("такого файла нит {}n{:02}-{:02}.{:02}".format(n, single_date.date().month,
+            print("такого файла нит {}n_{:02}-{:02}.{:02}".format(n, single_date.date().month,
                                                                  single_date.date().day,
                                                                  single_date.date().year - 2000))
     df['DATE'] = pd.to_datetime(df["DATE"])

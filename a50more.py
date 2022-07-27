@@ -45,6 +45,6 @@ def a50more(n, stDay, endDay, stYear, endYear, stMonth, endMonth, filecl):
                                                                  single_date.date().year - 2000))
     df['DATE'] = pd.to_datetime(df["DATE"])
     print(df)
-    if df['TIME'].dtypes == 'object':
-        df['TIME'] = df['TIME'].str.replace(',', '.')
+    # if df['TIME'].dtypes == 'object':
+    #     df['TIME'] = df['TIME'].str.replace(',', '.')
     return df
